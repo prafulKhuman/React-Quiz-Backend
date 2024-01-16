@@ -1,0 +1,57 @@
+.profile-icon {
+    cursor: pointer;
+}
+
+.profile-card {
+    position: absolute;
+    top: 85%;
+    left: 89vw;
+    transform: translateX(-50%);
+    background-color: #ffffff;
+    border: 1px solid #fffafa;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    
+}
+.word{
+    text-wrap: nowrap;
+    margin-bottom: 10%;
+    margin-top: 3%;
+}
+
+.spidomeeter{
+    width: 140%
+}
+
+.card-height-m{
+    height: inherit;
+}
+
+.font-color-contain{
+    color: black ;
+}
+
+.pointer{
+    cursor: pointer;
+}
+
+.m-table{
+    margin: 1%;
+}
+
+.toster-action{
+    position:fixed;
+    top: 80%;
+    right: 1%;
+    z-index: 5;
+}
+
+.row-extend{
+    margin: 2%;
+    line-height: 50%
+}
+
+.icon-size{
+    font-size: 20px;
+}

@@ -1,38 +1,38 @@
-.App {
-  text-align: center;
+@import url('https://fonts.googleapis.com/css2?family=Josefin+Sans&display=swap');
+
+.main{
+    font-family: 'Josefin Sans', sans-serif !important;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.mt-7{
+    margin-top: 8%;
+}
+.p-7{
+    padding-top: 7%;
+}
+/* .mt-4{
+    padding-top: 4%;
+} */
+.m-6{
+    margin-top: 6.5%;
+
+}
+.mrr-3{
+    margin-right: 2%;
+}
+.mrl-3{
+    margin-left: 2%;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.ml-2{
+    margin-left: 3% !important;
 }
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+.option-size{
+    font-size: 10%;
 }
-
-.App-link {
-  color: #61dafb;
+.spidomeeter{
+    width: 130%
 }
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.card-height-m{
+    height: inherit;
 }
