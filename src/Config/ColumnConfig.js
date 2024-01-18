@@ -27,6 +27,7 @@ export const QuizColumn = [
         name: "category",
         selector: row => row.category,
         sortable: true,
+        type : "select"
     },
     {
         name: "description" , 
@@ -76,4 +77,31 @@ export const QuestionColumn = [
         sortable: true,
     },
    
+];
+
+export const question_columns = [
+    {
+        name: 'Question',
+        selector: row => row.Question,
+    },
+    {
+        name: 'OptionA',
+        selector: row => row.OptionA,
+    },
+    {
+        name: 'OptionB',
+        selector: row => row.OptionB,
+    },
+    {
+        name: 'OptionC',
+        selector: row => row.OptionC,
+    },
+    {
+        name: 'OptionD',
+        selector: row => row.OptionD,
+    },
+    {
+        name: 'Status',
+        selector: row => row.Status,
+    },
 ];

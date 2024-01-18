@@ -10,14 +10,15 @@ import Row from 'react-bootstrap/Row';
 import Accordion from 'react-bootstrap/Accordion';
 import { useAccordionButton } from 'react-bootstrap/AccordionButton';
 import toast, { Toaster } from 'react-hot-toast';
-import QuestionTable from './QuestionTable/QuestionTable';
 import CommanTable from "../../Component/Table/CommanTable";
-import {QuestionColumn} from "../../Config/ColumnConfig"
+import { QuestionColumn } from "../../Config/ColumnConfig";
+import { question_columns } from "../../Config/ColumnConfig"
 
 function QuestionModal() {
   const [selectedQuiz, setSelectedQuiz] = useState({});
   const [formDataArray, setFormDataArray] = useState([]);
   const [showAccordion, setShowAccordion] = useState(false);
+  const [updateRecord, setUpdatedRecord] = useState([]);
   const [formState, setFormState] = useState({
     question: '',
     options: [
@@ -40,9 +41,7 @@ function QuestionModal() {
     refetchQueries: [{ query: GET_QUESTION }],
   });
 
-  const [updateQuestion] = useMutation(UPDATE_QUESTION, {
-    refetchQueries: [{ query: GET_QUESTION }],
-  });
+  
 
   const handleQuizChange = (e) => {
     const ID = e.target.value;
@@ -59,6 +58,7 @@ function QuestionModal() {
         option.id === id ? { ...option, value: value, status: false } : option
       ),
     }));
+
   };
 
   const handleImageClick = (id) => {
@@ -73,33 +73,57 @@ function QuestionModal() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-   
+    if(updateRecord.length !== 0){
 
-    // Validation for Quiz selection
+      try {
+        const newArray = formDataArray.findIndex((item) => item.question === updateRecord.Question)
+        const updatedState = [...formDataArray]
+        updatedState[newArray] = formState ;
+        setFormDataArray(updatedState);
+        
+        setFormState({
+          question: '',
+          options: [
+            { id: 'A', value: '', status: false },
+            { id: 'B', value: '', status: false },
+            { id: 'C', value: '', status: false },
+            { id: 'D', value: '', status: false },
+          ],
+        })
+        setUpdatedRecord([]);
+        toast.success('Question Updated successfully!');
+      } catch (error) {
+        toast.error('Error Updating Question. Please try again.');
+      }
+
+     
+      return;
+    }
+
     if (!selectedQuiz.id) {
-      
+
       toast.error("Please select a quiz.");
       return;
     }
 
-    // Validation for Question
+  
     if (!formState.question.trim()) {
-    
+
       toast.error("Please enter a question.");
       return;
     }
 
-    // Validation for Options
+   
     const invalidOptions = formState.options.map((option, index) => {
       if (!option.value.trim()) {
         return `Please enter a value for Option ${String.fromCharCode(65 + index)}.`;
       }
-      
+
       return '';
     });
 
     if (invalidOptions.some((error) => error !== '')) {
-      
+
       toast.error(invalidOptions);
       return;
     }
@@ -108,20 +132,19 @@ function QuestionModal() {
       toast.error('Please select at least one option.');
       return;
     }
-   
-    // Validation for checking if the limit is exceeded
+
+    
     if (selectedQuiz?.totalQuestion < formDataArray.length + 1) {
-      toast.error( 'Limit exceeded');
+      toast.error('Limit exceeded');
       return;
     }
 
-    // All validations passed, proceed with form submission
+   
     const updatedFormDataArray = [...formDataArray, { ...formState }];
 
     setFormDataArray(updatedFormDataArray);
 
-    setFormState((prevFormState) => ({
-      ...prevFormState,
+    setFormState({
       question: '',
       options: [
         { id: 'A', value: '', status: false },
@@ -129,7 +152,7 @@ function QuestionModal() {
         { id: 'C', value: '', status: false },
         { id: 'D', value: '', status: false },
       ],
-    }));
+    });
 
     if (selectedQuiz?.totalQuestion === updatedFormDataArray.length) {
       addQuestion({
@@ -147,34 +170,76 @@ function QuestionModal() {
   };
 
 
-  console.log(QuestionList , "question");
-  const response =  QuestionList?.data?.Question.map((row , index)=>{
-        
-            return  {
-              No: index +1 ,
-              id: row.id ,
-              quizName: row.quizName,
-              questionCount : row.questions.length,
-              
-             }
-       
-   
+
+  const response = QuestionList?.data?.Question.map((row, index) => {
+
+    return {
+      No: index + 1,
+      id: row.id,
+      quizName: row.quizName,
+      questionCount: row.questions.length,
+
+    }
+
+
   })
- 
 
-  const handleRemove =(id)=>{
-    
-    deleteQuestion({ variables: { id: id } })
-      .then(() => {
-         toast.success('Question Deleted successfully!');
-     })
-     .catch((error) => {
-         console.error('GraphQL error:', error.message);
-         toast.error('Error Deleting Question. Please try again.');
-     });
 
+
+  const handleRemove = (id) => {
+    try {
+      const remove = formDataArray.filter((item) => item.question !== id.Question)
+      setFormDataArray(remove);
+      toast.success('Question Deleted successfully!');
+    } catch (error) {
+      toast.error('Error Deleting Question. Please try again.');
+    }
 
   }
+
+
+  const rowConfig = formDataArray.map((row) => {
+    return {
+      Question: row.question,
+      OptionA: row.options[0].value,
+      OptionB: row.options[1].value,
+      OptionC: row.options[2].value,
+      OptionD: row.options[3].value,
+      Status: row.options[0].status === true ? "OptionA" : row.options[1].status === true ? "OptionB" : row.options[2].status === true ? "OptionC" : row.options[3].status === true ? "OptionD" : "Not Select"
+    }
+  })
+
+
+  const handleupdate =(data)=>{
+    setFormState({
+      question: data.Question,
+      options: [
+        { id: 'A', value: data.OptionA, status: false },
+        { id: 'B', value: data.OptionB, status: false },
+        { id: 'C', value: data.OptionC, status: false },
+        { id: 'D', value: data.OptionD, status: false },
+      ],
+    });
+
+    const id = (data.Status).slice(-1);
+    setFormState((prevFormState) => ({
+    ...prevFormState,
+    options: prevFormState.options.map((option) =>
+      option.id === id ? { ...option, status: !option.status } : { ...option, status: false }
+    ),
+  }));
+
+
+     setUpdatedRecord(data)
+  }
+
+
+  const handleDelete=(data) => {
+    deleteQuestion({ variables :{ id: data.id}}).then(() =>  toast.success('Question Deleted successfully!')).catch(()=>  toast.error('Error Deleting Question. Please try again.'))
+  }
+  console.log(formDataArray , "Updated");
+
+
   return (
     <>
       <div >
@@ -206,7 +271,7 @@ function QuestionModal() {
                     </option>
                   ))}
                 </Form.Select>
-               
+
               </Form.Group>
             </Row>
             <div className="mt-5">
@@ -231,10 +296,10 @@ function QuestionModal() {
           <Card.Header>
             <Row>
               <Col className="d-flex align-items-center" md={{ span: 4 }}>
-                Add Question{' '}
+              {updateRecord.length !== 0 ? "Update Record" : "Add Question"}  {' '}
                 <span style={{ marginLeft: '5%', fontWeight: '800' }}>
                   {' '}
-                  {formDataArray.length} out of {selectedQuiz?.totalQuestion ? selectedQuiz?.totalQuestion : 0}{' '}
+                  {formDataArray.length + 1} out of {selectedQuiz?.totalQuestion ? selectedQuiz?.totalQuestion : 0}{' '}
                 </span>
               </Col>
               <Col
@@ -264,7 +329,7 @@ function QuestionModal() {
                       type="text"
                       name="question"
                       placeholder="Enter Question"
-                      value={formState.question}
+                      value={formState.question }
                       onChange={(e) =>
                         setFormState({
                           ...formState,
@@ -272,7 +337,7 @@ function QuestionModal() {
                         })
                       }
                     />
-                    
+
                   </Form.Group>
                 </Row>
                 <Row className="mb-2 mt-5">
@@ -287,17 +352,18 @@ function QuestionModal() {
                         type="text"
                         name={`option${option.id}`}
                         placeholder={`Enter Option ${option.id}`}
-                        value={option.value}
+                        value ={option.value }
                         onChange={(e) => handleOptionChange(e, option.id)}
                       />
-                      
+
                     </Form.Group>
                     <Form.Group as={Col} md="1">
                       <Button
                         variant="outline-secondary"
                         onClick={() => handleImageClick(option.id)}
                       >
-                        {option.status ? (
+                         
+                         { option.status  ? (
                           <img
                             width="22"
                             height="22"
@@ -313,14 +379,15 @@ function QuestionModal() {
                           />
                         )}
                       </Button>
-                     
+
                     </Form.Group>
                   </Row>
                 ))}
                 <Row className="justify-content-end">
                   <Form.Group as={Col} md="2" controlId="validationFormik02">
                     <Button style={{ width: '100%' }} type="submit" name="kp">
-                      {selectedQuiz?.totalQuestion > formDataArray.length + 1 ? 'Next...' : 'Submit'}
+                      {updateRecord.length !== 0 ? "Update Record" : 
+                      (selectedQuiz?.totalQuestion > formDataArray.length + 1 ? 'Next...' : 'Submit')}
                     </Button>
                   </Form.Group>
                   <Toaster
@@ -334,14 +401,15 @@ function QuestionModal() {
             </Card.Body>
           </Accordion.Collapse>
           <div style={{ margin: '20px' }}>
-            <QuestionTable RowConfig={formDataArray} />
+
+            <CommanTable updateRecord={(data) => handleupdate(data)} rowConfig={rowConfig} columnConfig={question_columns} handleDelete={(id) => handleRemove(id)} />
+
           </div>
         </Card>
       </Accordion>
       <div className='mt-7'>
-            <p className='text-center'>Quiz List</p> 
-            {/*   modify = {(data)=>handleUpdate(data)} */}
-            <CommanTable rowConfig={response} columnConfig={QuestionColumn} loading={QuestionList?.loading} error={QuestionList?.error} handleDelete={(id)=> handleRemove(id)}/>
+        <p className='text-center'>Question List</p>
+        <CommanTable updateRecord={"NO"}  rowConfig={response} columnConfig={QuestionColumn} loading={QuestionList?.loading} error={QuestionList?.error} handleDelete={(id) => handleDelete(id)} />
       </div>
     </>
   );

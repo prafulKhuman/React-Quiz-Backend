@@ -6,13 +6,13 @@ import Row from 'react-bootstrap/Row';
 import * as formik from 'formik';
 import * as yup from 'yup';
 import Card from 'react-bootstrap/Card';
-import { useState  , useEffect} from 'react';
+import { useState, useEffect } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
-import { useQuery, useMutation} from '@apollo/client';
-import { GET_QUIZ , CREATE_QUIZ  , DELETE_QUIZ , UPDATE_QUIZ } from './../../ApolloClient/Quiz/QuizApollo'
+import { useQuery, useMutation } from '@apollo/client';
+import { GET_QUIZ, CREATE_QUIZ, DELETE_QUIZ, UPDATE_QUIZ } from './../../ApolloClient/Quiz/QuizApollo'
 import { GET_CATEGORY } from './../../ApolloClient/Category/CategoryQuery'
 import CommanTable from '../../Component/Table/CommanTable';
-import {QuizColumn} from "../../Config/ColumnConfig";
+import { QuizColumn } from "../../Config/ColumnConfig";
 
 
 function QuizForm() {
@@ -22,7 +22,7 @@ function QuizForm() {
 
 
     const quizList = useQuery(GET_QUIZ);
-    const {data} = useQuery(GET_CATEGORY);
+    const { data } = useQuery(GET_CATEGORY);
 
     const [addQuiz] = useMutation(CREATE_QUIZ, {
         refetchQueries: [{ query: GET_QUIZ }],
@@ -36,14 +36,16 @@ function QuizForm() {
         refetchQueries: [{ query: GET_QUIZ }],
     });
 
-    const [ record , setRecord ] = useState([]);
+    const [record, setRecord] = useState([]);
+    const [updateRecord, setUpdateRecord] = useState([]);
+
 
 
     useEffect(() => {
         if (quizList?.data?.Quiz) {
             const updatedRecord = quizList?.data.Quiz.map((item, index) => {
                 const response = data?.Category.find((fil) => (fil.id).toString() == item.category);
-                console.log(response , "updated");
+                console.log(response, "updated");
                 if (response !== null) {
                     return {
                         no: index + 1,
@@ -57,41 +59,33 @@ function QuizForm() {
                 return null;
             });
 
-            setRecord(updatedRecord.filter(Boolean)); 
+            setRecord(updatedRecord.filter(Boolean));
         }
-    }, [ quizList?.data , data]);
-      
+    }, [quizList?.data, data]);
+
     const handleRemove = (Id) => {
-        deleteQuiz({ variables: { id: Id } })
-        .then(() => {
-           toast.success('Quiz Deleted successfully!');
-       })
-       .catch((error) => {
-           console.error('GraphQL error:', error.message);
-           toast.error('Error Deleting Quiz. Please try again.');
-       });
+        deleteQuiz({ variables: { id: Id.id } })
+            .then(() => {
+                toast.success('Quiz Deleted successfully!');
+            })
+            .catch((error) => {
+                console.error('GraphQL error:', error.message);
+                toast.error('Error Deleting Quiz. Please try again.');
+            });
 
-   };
+    };
 
-
-   const handleUpdate =(data)=>{
-       updateQuiz({ variables: { id: data.id, name: data.name ,category: data.category , description: data.description , totalQuestion : parseInt( data.totalQuestion) } }).then(()=>{
-           toast.success('Quiz Updated successfully!');
-       }).catch((error) => {
-           console.error('GraphQL error:', error.message);
-           toast.error('Error Updateing Quiz. Please try again.');
-       })
-   }
-
-    const schema = yup.object().shape({
-        QuizName: yup.string().required(),
-        QuizCategory: yup.string().required(),
-        QuizDescription: yup.string().required(),
-        QuizTotal: yup.number().required(),
-        
-    });
 
    
+
+    const schema = yup.object().shape({
+        QuizName: (updateRecord.length === 0 && yup.string().required())  ,
+        QuizCategory:   yup.string().required(),
+        QuizDescription:  (updateRecord.length === 0 && yup.string().required()),
+        QuizTotal:  (updateRecord.length === 0 && yup.string().required()),
+    });
+
+
 
 
     return (<>
@@ -103,16 +97,18 @@ function QuizForm() {
             border="secondary"
             style={{ width: '95vw', marginTop: '2%', marginLeft: '2%' }}
         >
-            <Card.Header>Add Quiz</Card.Header>
+            <Card.Header>{updateRecord.length !== 0 ? "Update Quiz" : "Add Quiz"}</Card.Header>
             <Card.Body>
                 <Formik
                     validationSchema={schema}
                     onSubmit={(values, action) => {
-                      
 
-                            addQuiz({ variables: { name: values.QuizName , category: values.QuizCategory , description: values.QuizDescription , totalQuestion :  values.QuizTotal   } })
+                       
+                        (updateRecord.length !== 0 ? updateQuiz({ variables: { id: updateRecord.id, name: (values.QuizName !== '' ? values.QuizName : updateRecord.name ), category:  values.QuizCategory, description: (values.QuizDescription !== '' ? values.QuizDescription : updateRecord.description ) , totalQuestion: (values.QuizTotal !== null ? values.QuizTotal : parseInt(updateRecord.totalQuestion) )  } }) :
+                            addQuiz({ variables: { name: values.QuizName, category: values.QuizCategory, description: values.QuizDescription, totalQuestion: values.QuizTotal } }))
                             .then(() => {
-                                toast.success('Quiz added successfully!');
+                                toast.success(updateRecord.length !== 0 ? 'Quiz Updated successfully!' : 'Quiz Added successfully');
+                                setUpdateRecord([]);
                                 action.resetForm({
                                     values: {
                                         QuizName: '',
@@ -121,26 +117,27 @@ function QuizForm() {
                                         QuizTotal: null,
                                     }
                                 });
-                              
+
+
                             })
                             .catch((error) => {
                                 console.error('GraphQL error:', error.message);
-                                toast.error('Error adding Quiz. Please try again.');
-                            });                           
-                            
-                       
-                       
+                                toast.error(updateRecord.length !== 0 ? 'Error Updateing Quiz. Please try again.' : 'Error adding Quiz. Please try again.');
+                            });
+
+
+
                     }}
                     initialValues={{
                         QuizName: '',
                         QuizCategory: '',
                         QuizDescription: '',
-                        QuizTotal: null ,
+                        QuizTotal: null,
 
                     }}
                 >
                     {({ handleSubmit, handleChange, values, touched, errors }) => (
-                        <Form  onSubmit={handleSubmit}>
+                        <Form onSubmit={handleSubmit}>
                             <Row className="mb-3">
                                 <Form.Group as={Col} md="4" controlId="validationFormik01">
                                     <Form.Label>Quiz Name</Form.Label>
@@ -148,37 +145,29 @@ function QuizForm() {
                                         type="text"
                                         name="QuizName"
                                         placeholder="Quiz Name"
-                                        value={values.QuizName}
-                                        touched = {touched}
+                                        value={values.QuizName ? values.QuizName : updateRecord?.name ? updateRecord.name : ""}
                                         onChange={handleChange}
-                                        isInvalid={!!errors.QuizName}
+                                        {...(updateRecord.length === 0 && { touched, isInvalid: !!errors.QuizName })}
+
                                     />
                                     <Form.Control.Feedback type="invalid">
-                                            {errors.QuizName}
+                                        {errors.QuizName}
                                     </Form.Control.Feedback>
                                 </Form.Group>
                                 <Form.Group as={Col} md="4" controlId="validationFormik02">
                                     <Form.Label>Quiz Category</Form.Label>
-                                    {/* <Form.Control
-                                        type="text"
-                                        name="QuizCategory"
-                                        placeholder="QuizCategory"
-                                        value={values.QuizCategory}
-                                        onChang
-                                        e={handleChange}
-                                        isInvalid={!!errors.QuizCategory}
-                                    /> */}
-                                    <Form.Select aria-label="Quiz Select" name="QuizCategory" isInvalid={!!errors.QuizCategory}  onChange={handleChange}>
+
+                                    <Form.Select aria-label="Quiz Select" name="QuizCategory" isInvalid={!!errors.QuizCategory} onChange={handleChange}>
                                         <option>Select Category</option>
-                                        {data?.Category.map((item)=>(
+                                        {data?.Category.map((item) => (
                                             <option value={item.id} key={item.id}>{item.name}</option>
                                         ))}
                                     </Form.Select>
 
                                     <Form.Control.Feedback type="invalid">
-                                            {errors.QuizCategory}
+                                        {errors.QuizCategory}
                                     </Form.Control.Feedback>
-                                    
+
                                 </Form.Group>
                                 <Form.Group as={Col} md="4" controlId="validationFormikUsername">
                                     <Form.Label>Quiz Description </Form.Label>
@@ -189,10 +178,10 @@ function QuizForm() {
                                             placeholder="QuizDescription"
                                             aria-describedby="inputGroupPrepend"
                                             name="QuizDescription"
-                                            value={values.QuizDescription}
-                                            touched = {touched}
+                                            value={values.QuizDescription ? values.QuizDescription : updateRecord?.description ? updateRecord.description : ""}
                                             onChange={handleChange}
-                                            isInvalid={!!errors.QuizDescription}
+                                            {...(updateRecord.length === 0 && { touched, isInvalid: !!errors.QuizDescription })}
+
                                         />
                                         <Form.Control.Feedback type="invalid">
                                             {errors.QuizDescription}
@@ -207,19 +196,19 @@ function QuizForm() {
                                         type="number"
                                         placeholder="QuizTotal"
                                         name="QuizTotal"
-                                        value={values.QuizTotal}
-                                        touched = {touched}
+                                        value={values.QuizTotal ? values.QuizTotal : updateRecord?.totalQuestion ? updateRecord?.totalQuestion : ""}
                                         onChange={handleChange}
-                                        isInvalid={!!errors.QuizTotal}
+                                        {...(updateRecord.length === 0 && { touched, isInvalid: !!errors.QuizTotal })}
+
                                     />
 
                                     <Form.Control.Feedback type="invalid">
                                         {errors.QuizTotal}
                                     </Form.Control.Feedback>
                                 </Form.Group>
-                               
-                                <Form.Group as={Col} md="2" controlId="validationFormik02" style={{marginTop: "2.4%"}}>
-                                    <Button type="submit"> Add Quiz</Button>
+
+                                <Form.Group as={Col} md="2" controlId="validationFormik02" style={{ marginTop: "2.4%" }}>
+                                    <Button type="submit">  {updateRecord.length !== 0 ? "Update Quiz" : "Add Quiz"}</Button>
                                     <Toaster
                                         position="top-right"
                                         toastOptions={{
@@ -227,10 +216,10 @@ function QuizForm() {
                                         }}
                                     />
                                 </Form.Group>
-                                
+
                             </Row>
-                           
-                            
+
+
                         </Form>
                     )}
                 </Formik>
@@ -239,7 +228,7 @@ function QuizForm() {
 
         <div className='mt-7'>
             <h5 className='text-center mt-5 text-uppercase fw-bolder '>Quiz List</h5>
-            <CommanTable rowConfig={record} columnConfig={QuizColumn} loading={quizList.loading} error={quizList.error} handleDelete={(id)=> handleRemove(id)}  modify = {(data)=>handleUpdate(data)}/>
+            <CommanTable updateRecord={(item) => setUpdateRecord(item)} rowConfig={record} columnConfig={QuizColumn} loading={quizList.loading} error={quizList.error} handleDelete={(id) => handleRemove(id)}  />
 
         </div>
 

@@ -1,12 +1,12 @@
 import DataTable from 'react-data-table-component';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState} from 'react';
 import "./../Coustom.css";
 import Toast from 'react-bootstrap/Toast';
 import { Button } from 'react-bootstrap';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import UpdateRecordForm from './UpdateRecordForm';
+
 
 
 
@@ -19,11 +19,17 @@ const paginationComponentOptions = {
 };
 
 const customStyles = {
+    headRow: {
+        style: {
+            width: "96vw"
+        },
+    },
     rows: {
         style: {
             minHeight: '45px',
             border: '1px solid #dddddd',
             fontSize: '15px',
+            width: "96vw",
             
         },
     },
@@ -54,44 +60,49 @@ const Loader = <div class="text-center" style={{ marginTop: "10px" }}>
 </div>
 
 
-function CommanTable({ rowConfig, columnConfig, loading, error , handleDelete , modify}) {
+function CommanTable({ rowConfig, columnConfig, loading, error , handleDelete , modify , updateRecord}) {
 
     const [selectedRow, setSelectedRow] = useState([]);
     const [show, setShow] = useState(false);
     const [showError, setShowError] = useState(false);
-    const [showUpdate, setShowUpdate] = useState(false);
-    const [showUpdateData, setShowUpdateData] = useState([]);
+    const [toggleCleared, setToggleCleared] = useState(false);
+
     const [selectedRecordCount, setSelectedRecordCount] = useState(0);
    
 
     const handleChange = ({ selectedRows }) => {
+       
+        if(updateRecord !== "NO" && selectedRows.length === 0){
+            updateRecord(selectedRows)
+        }
         setSelectedRow(selectedRows);
         const rowCount = selectedRows.length;
         setSelectedRecordCount(rowCount);
         
         if(rowCount > 1)
         {
+            setShow(false);
             setShowError(true)
         }else if(rowCount === 0){
+            setShow(false); 
             setShowError(false)
-        }
-
-        if (rowCount === 1) {
+        }else if(rowCount === 1){
             setShowError(false)
             setShow(true);
-        } else {
-            setShow(false);
         }
+
     };
 
     const handleUpdate = (SelectedRow) => {
-        setShowUpdate(true);
-        setShowUpdateData(SelectedRow)
+        updateRecord(SelectedRow);
+        setShow(false);
+        setToggleCleared(!toggleCleared);
     }
    
     const handleShow = (data) => {
         const response = Object.keys(data).map((key) => {
-           return  <p>{key} :: {data[key]}</p>
+                const style = ( key == "rules" ? {lineHeight: "160%"} : {lineHeight: "80%"} );
+           return  <p style={style}>{key} :: {data[key]}</p>
 
          })
 
@@ -116,6 +127,7 @@ function CommanTable({ rowConfig, columnConfig, loading, error , handleDelete , 
                     onSelectedRowsChange={handleChange}
                     expandableRows 
                     expandableRowsComponent={ExpandedComponent}
+                    clearSelectedRows={toggleCleared}
                     
                 />
             </div>
@@ -128,8 +140,8 @@ function CommanTable({ rowConfig, columnConfig, loading, error , handleDelete , 
                     <Toast.Body>
                         <Container>
                             <Row>
-                                <Col sm={6} style={{marginLeft:"2em"}}><Button variant="outline-danger" onClick={()=> handleDelete(selectedRow[0].id)}>Delete</Button></Col>
-                                <Col sm={4}> <Button variant="outline-primary" onClick={()=> handleUpdate(selectedRow[0])}>Update</Button> </Col>
+                                <Col sm={6} style={{marginLeft:"2em"}}><Button variant="outline-danger" onClick={()=> { handleDelete(selectedRow[0]) ; setShow(false) ; setToggleCleared(!toggleCleared);}}>Delete</Button></Col>
+                               {updateRecord !== "NO" &&  <Col sm={4}> <Button variant="outline-primary" onClick={()=> handleUpdate(selectedRow[0])}>Update</Button> </Col> } 
                             </Row>
                             
                         </Container>
@@ -150,13 +162,6 @@ function CommanTable({ rowConfig, columnConfig, loading, error , handleDelete , 
                 </Toast>
             </div>
 
-            <UpdateRecordForm  
-                show={showUpdate}
-                onHide={() => setShowUpdate(false)}
-                data={showUpdateData}
-                onTostHide={() => setShow(false)}
-                modify = {(data)=> modify(data)}
-            />
            
         </>
     );

@@ -21,26 +21,30 @@ function Rules(props) {
   const RulesList = useQuery(GET_RULES);
   const { Formik } = formik;
   
-  const schema = yup.object().shape({
-    quiz: yup.string().required(),
-    rules: yup.string().required(),
-  });
-
+  
   const [record, setRecord] = useState([]);
-
+  const [updateRecord, setUpdateRecord] = useState([]);
+  
+  
   useEffect(() => {
     if (RulesList?.data?.Rules) {
       const updatedRecord = RulesList?.data?.Rules.map((item, index) => ({
         no: index + 1,
         id: item.id,
+        quizid : item.quizid ,
         quiz: item.quiz,
         rules: item.rules,
-
+        
       }));
-
+      
       setRecord(updatedRecord);
     }
   }, [RulesList?.data]);
+  
+  const schema = yup.object().shape({
+    quiz: yup.string().required(),
+    rules: (updateRecord.length === 0 && yup.string().required()) ,
+  });
 
  console.log(data);
   const [addRules] = useMutation(CREATE_RULES, {
@@ -56,7 +60,7 @@ function Rules(props) {
   });
 
   const handleRemove = (Id) => {
-    deleteRules({ variables: { id: Id } })
+    deleteRules({ variables: { id: Id.id } })
       .then(() => {
         toast.success('Rules Deleted successfully!');
       })
@@ -68,20 +72,6 @@ function Rules(props) {
   };
 
 
-  const handleUpdate = (data) => {
-    updateRules({ variables: { id: data.id, quiz: data.quiz, rules: data.rules } }).then(() => {
-      toast.success('Rule Updated successfully!');
-    }).catch((error) => {
-      console.error('GraphQL error:', error.message);
-      toast.error('Error Updateing Rule. Please try again.');
-    })
-  }
-
-
-
-  
-
-
   return (<>
     <div className='ml-3 d-flex justify-content-between'>
       <div><p><i class="bi bi-arrow-return-right"></i> DashBoard / Quiz Rules </p></div>
@@ -91,7 +81,7 @@ function Rules(props) {
       border="secondary"
       style={{ width: '95vw', marginTop: '2%', marginLeft: '2%' }}
     >
-      <Card.Header>Add Quiz Rules</Card.Header>
+      <Card.Header> {updateRecord.length !== 0 ? "Update Quiz Rules" :  "Add Quiz Rules"}</Card.Header>
       <Card.Body>
 
 
@@ -99,9 +89,12 @@ function Rules(props) {
           validationSchema={schema}
           onSubmit={(values, action) => {
           const quizObject = JSON.parse(values.quiz);
-            addRules({ variables: { quizid: quizObject.id , quiz: quizObject.name, rules: values.rules } })
+
+            (updateRecord.length !== 0 ?  updateRules({ variables: { id: (updateRecord.id).toString(), quizid : updateRecord.quizid , quiz: quizObject.name, rules: (values.rules !== "" ? values.rules : updateRecord.rules) } }) : 
+            addRules({ variables: { quizid: quizObject.id , quiz: quizObject.name, rules: values.rules } }))
               .then(() => {
-                toast.success('Quiz added successfully!');
+                toast.success(`Quiz ${updateRecord.length !== 0 ? `Update` : `Added`} successfully!`);
+                setUpdateRecord([]);
                 action.resetForm({
                   values: {
                     quiz: "",
@@ -111,7 +104,7 @@ function Rules(props) {
               })
               .catch((error) => {
                 console.error('GraphQL error:', error.message);
-                toast.error('Error adding Quiz. Please try again.');
+                toast.error(`Error ${updateRecord.length !== 0 ? `Updating` : `Adding`} Quiz. Please try again.`);
               });
 
 
@@ -154,7 +147,7 @@ function Rules(props) {
                     as="textarea" 
                     rows={3}
                     name="rules"
-                    value={values.rules}
+                    value={values.rules ? values.rules : updateRecord?.rules ? updateRecord.rules : ""}
                     onChange={(e) => {
                       handleChange(e)
                     }}
@@ -167,8 +160,8 @@ function Rules(props) {
                   </Form.Control.Feedback>
                 </Form.Group>
 
-                <Form.Group as={Col} md="3" controlId="validationFormik01" style={{ marginTop: "2.5%" }}>
-                  <Button type="submit">Add Rule</Button>
+                <Form.Group as={Col} md="3" controlId="validationFormik01" style={{ marginTop: "6%" }}>
+                  <Button type="submit">{updateRecord.length !== 0 ? "Update  Rules" :  "Add  Rules"}</Button>
                 </Form.Group>
 
                 <Toaster
@@ -185,7 +178,7 @@ function Rules(props) {
     </Card>
     <div className='mt-7'>
       <h5 className='text-center mt-5 text-uppercase  mb-4'>Quiz Rules List</h5>
-      <CommanTable rowConfig={record} columnConfig={RulesColumn} loading={RulesList.loading} error={RulesList.error} handleDelete={(id) => handleRemove(id)} modify={(data) => handleUpdate(data)} />
+      <CommanTable updateRecord={(item) => setUpdateRecord(item)} rowConfig={record} columnConfig={RulesColumn} loading={RulesList.loading} error={RulesList.error} handleDelete={(id) => handleRemove(id)}  />
     </div>
 
   </>);

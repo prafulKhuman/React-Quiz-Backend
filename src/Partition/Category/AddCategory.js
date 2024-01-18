@@ -33,13 +33,11 @@ function AddCategory() {
   
     const { Formik } = formik;
 
-    const schema = yup.object().shape({
-        category: yup.string().required(),
-    });
-
+   
 
   
     const [ record , setRecord ] = useState([]);
+    const [ updatedRecord , setUpdatedRecord ] = useState([]);
 
     useEffect(() => {
       if (categorList?.data?.Category) {
@@ -53,9 +51,13 @@ function AddCategory() {
       }
     }, [categorList?.data]);
 
- 
+    const schema = yup.object().shape({
+        category: (updatedRecord.length === 0 && yup.string().required()) ,
+    });
+
+
     const handleRemove = (Id) => {
-         deleteCategory({ variables: { id: Id } })
+         deleteCategory({ variables: { id: Id.id } })
          .then(() => {
             toast.success('Category Deleted successfully!');
         })
@@ -67,14 +69,9 @@ function AddCategory() {
     };
 
 
-    const handleUpdate =(data)=>{
-        updateCategory({ variables: { id: data.id, name: data.name } }).then(()=>{
-            toast.success('Category Updated successfully!');
-        }).catch((error) => {
-            console.error('GraphQL error:', error.message);
-            toast.error('Error Deleting category. Please try again.');
-        })
-    }
+   
+
+    console.log(updatedRecord , "updatedRecord");
     
     return (<>
         <div>
@@ -86,15 +83,17 @@ function AddCategory() {
             border="secondary"
             style={{ width: '95vw', marginTop: '2%', marginLeft: '2%' }}
         >
-            <Card.Header>Add Category</Card.Header>
+            <Card.Header> {updatedRecord.length !== 0 ? "Update Category" : "Add Category"} </Card.Header>
             <Card.Body>
 
                 <Formik
                     validationSchema={schema} 
                     onSubmit={(values, action) => {
-                        addCategory({ variables: { name: values.category } })
+                        (updatedRecord.length !== 0 ?  updateCategory({ variables: { id: updatedRecord.id, name: (values.category !== '' ? values.category : updatedRecord.name ) } }) : 
+                        addCategory({ variables: { name: values.category } }))
                             .then(() => {
-                                toast.success('Category added successfully!');
+                                toast.success(updatedRecord.length !== 0 ? 'Category Updated successfully!' : 'Category Added successfully!');
+                                setUpdatedRecord([]);
                                 action.resetForm({
                                     values: {
                                         category: ''
@@ -103,7 +102,7 @@ function AddCategory() {
                             })
                             .catch((error) => {
                                 console.error('GraphQL error:', error.message);
-                                toast.error('Error adding category. Please try again.');
+                                toast.error(updatedRecord.length !== 0 ? 'Error Updating category. Please try again.' : 'Error Adding category. Please try again.');
                             });
                     }}
                     initialValues={{
@@ -120,17 +119,16 @@ function AddCategory() {
                                         type="text"
                                         name="category"
                                         placeholder='Eneter Category'
-                                        value={values.category}
-                                        touched = {touched}
+                                        value={values.category ? values.category : updatedRecord?.name ? updatedRecord.name : ""}
                                         onChange={handleChange}
-                                        isInvalid={!!errors.category}
+                                        {...(updatedRecord.length === 0 && { touched, isInvalid: !!errors.category })}
                                     />
                                      <Form.Control.Feedback type="invalid">
                                         {errors.category}
                                     </Form.Control.Feedback>
                                 </Form.Group>
                                 <Form.Group as={Col} md="5" controlId="validationFormik02" style={{marginTop: "2.4%"}}>
-                                    <Button type="submit">Add Category</Button>
+                                    <Button type="submit"> {updatedRecord.length !== 0 ? "Update Category" : "Add Category"}</Button>
                                     <Toaster
                                         position="top-right"
                                         toastOptions={{
@@ -149,7 +147,7 @@ function AddCategory() {
 
         <div className='mt-7'>
             <p className='text-center'>Category List</p> 
-            <CommanTable rowConfig={record} columnConfig={CategoryColumn} loading={categorList.loading} error={categorList.error} handleDelete={(id)=> handleRemove(id)}  modify = {(data)=>handleUpdate(data)}/>
+            <CommanTable updateRecord={(item)=> setUpdatedRecord(item)} rowConfig={record} columnConfig={CategoryColumn} loading={categorList.loading} error={categorList.error} handleDelete={(id)=> handleRemove(id)}  />
         </div>
 
     </ >);

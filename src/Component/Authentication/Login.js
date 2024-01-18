@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/img-redundant-alt */
-import React from 'react';
+import React , {useState} from 'react';
 import { useFormik } from 'formik';
 import { Link } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
@@ -16,7 +16,8 @@ import { useAuth } from '../../AuthContext/AuthContext';
 function Login({ onSuccess }) {
     const [login] = useMutation(LOGIN_MUTATION);
     const { dispatch } = useAuth();
-
+    const [isLoading, setIsLoading] = useState(false);
+    const [ showPassword , setShowPassword ] = useState(false);
 
     const formik = useFormik({
         initialValues: {
@@ -30,25 +31,13 @@ function Login({ onSuccess }) {
 
         }),
         onSubmit: (values, action) => {
+            setIsLoading(true);
             login({ variables: { username: values.email, password: values.password } })
                 .then((response) => {
                                      
-                    toast.success('Login Successfully', {
-                        position: "top-right",
-                        autoClose: 1000,
-                        onClose: () => {
-
                             dispatch({ type: 'LOGIN', payload: { token: response.data.adminLogin.token } });
                             localStorage.setItem("USER_ID", response.data.adminLogin.userId);
-                            // onSuccess();
-                        },
-                        hideProgressBar: false,
-                        closeOnClick: true,
-                        pauseOnHover: true,
-                        draggable: true,
-                        progress: undefined,
-                        theme: "light",
-                    });
+                    
                     action.resetForm({
                         values: {
                             email: '',
@@ -58,13 +47,9 @@ function Login({ onSuccess }) {
                         }
                     });
 
-
-
-
                 })
-                .catch(() => {
-
-                    toast.error("SomeThing Want Wrong", {
+                .catch((error) => {
+                    toast.error( error.message == "Invalid credentials" ? "Invalid credentials" : "SomeThing Want Wrong", {
                         position: "top-right",
                         autoClose: 2000,
                         hideProgressBar: false,
@@ -74,11 +59,9 @@ function Login({ onSuccess }) {
                         progress: undefined,
                         theme: "light",
                     })
-
-
-
-
-                });
+                }).finally(() => {
+                    setIsLoading(false);
+                })
 
 
         }
@@ -108,24 +91,32 @@ function Login({ onSuccess }) {
                                         type="email"
                                         id="form3Example3"
                                         name="email"
+                                        disabled ={isLoading}
                                         className={`form-control form-control-lg ${formik.touched.email && formik.errors.email ? 'is-invalid' : ''}`}
                                         placeholder="Enter a valid email address"
                                         {...formik.getFieldProps('email')}
                                     />
                                     {formik.touched.email && formik.errors.email && <div className="invalid-feedback">{formik.errors.email}</div>}
                                 </div>
-                                <div className="form-outline mb-3">
-                                    <label className="form-label" htmlFor="form3Example4">
-                                        Password
-                                    </label>
-                                    <input
-                                        type="password"
-                                        id="form3Example4"
-                                        name="password"
-                                        className={`form-control form-control-lg ${formik.touched.password && formik.errors.password ? 'is-invalid' : ''}`}
-                                        placeholder="Enter password"
-                                        {...formik.getFieldProps('password')}
-                                    />
+                                <div className="form-outline mb-3 ">
+                                    
+                                        <label className="form-label" htmlFor="form3Example4">
+                                            Password
+                                        </label>
+                                        <div className='d-flex'>
+                                        <input
+                                            type={showPassword ? "text" : "password"}
+                                            id="form3Example4"
+                                            name="password"
+                                            disabled={isLoading}
+                                            className={`form-control form-control-lg ${formik.touched.password && formik.errors.password ? 'is-invalid' : ''}`}
+                                            placeholder="Enter password"
+                                            {...formik.getFieldProps('password')}
+                                        />
+                                        <span class=" input-group-text" onClick={()=> setShowPassword(!showPassword)}> {showPassword ? <i class="bi bi-eye-slash"></i> : <i class="bi bi-eye"></i>}  </span>
+                                        
+                                    </div>
+
                                     {formik.touched.password && formik.errors.password && <div className="invalid-feedback">{formik.errors.password}</div>}
                                 </div>
 
@@ -144,17 +135,13 @@ function Login({ onSuccess }) {
                                 <div className="text-center text-lg-start mt-4 pt-2">
                                     <button
                                         type="submit"
-                                        className="btn btn-primary btn-lg"
-                                        style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
+                                        className="btn btn-primary btn-lg loading-login"
                                     >
-                                        Login
+
+                                       {isLoading ?  <span class="loader"></span> : <span>Login</span>}
+                                        
                                     </button>
-                                    <p className="small fw-bold mt-2 pt-1 mb-0">
-                                        Don't have an account?{' '}
-                                        <span className="link-danger">
-                                            <Link to="/Register"> Register </Link>
-                                        </span>
-                                    </p>
+                                  
                                 </div>
                             </form>
 
