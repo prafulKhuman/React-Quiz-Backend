@@ -101,7 +101,7 @@ function CommanTable({ rowConfig, columnConfig, loading, error , handleDelete , 
    
     const handleShow = (data) => {
         const response = Object.keys(data).map((key) => {
-                const style = ( key == "rules" ? {lineHeight: "160%"} : {lineHeight: "80%"} );
+                const style = ( key === "rules" ? {lineHeight: "160%"} : {lineHeight: "80%"} );
            return  <p style={style}>{key} :: {data[key]}</p>
 
          })

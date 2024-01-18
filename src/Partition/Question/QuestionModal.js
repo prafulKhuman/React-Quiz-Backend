@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
 import { GET_QUIZ } from './../../ApolloClient/Quiz/QuizApollo';
-import { GET_QUESTION, CREATE_QUESTION, DELETE_QUESTION, UPDATE_QUESTION } from './../../ApolloClient/Question/QuestionApollo';
+import { GET_QUESTION, CREATE_QUESTION, DELETE_QUESTION } from './../../ApolloClient/Question/QuestionApollo';
 import Card from 'react-bootstrap/Card';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';

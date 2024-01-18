@@ -44,7 +44,7 @@ function QuizForm() {
     useEffect(() => {
         if (quizList?.data?.Quiz) {
             const updatedRecord = quizList?.data.Quiz.map((item, index) => {
-                const response = data?.Category.find((fil) => (fil.id).toString() == item.category);
+                const response = data?.Category.find((fil) => (fil.id).toString() === item.category);
                 console.log(response, "updated");
                 if (response !== null) {
                     return {

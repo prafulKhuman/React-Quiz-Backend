@@ -1,7 +1,6 @@
 /* eslint-disable jsx-a11y/img-redundant-alt */
 import React , {useState} from 'react';
 import { useFormik } from 'formik';
-import { Link } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
 import { LOGIN_MUTATION } from '../../ApolloClient/Authentication/LogonApollo';
 import * as Yup from 'yup';
@@ -49,7 +48,7 @@ function Login({ onSuccess }) {
 
                 })
                 .catch((error) => {
-                    toast.error( error.message == "Invalid credentials" ? "Invalid credentials" : "SomeThing Want Wrong", {
+                    toast.error( error.message === "Invalid credentials" ? "Invalid credentials" : "SomeThing Want Wrong", {
                         position: "top-right",
                         autoClose: 2000,
                         hideProgressBar: false,
