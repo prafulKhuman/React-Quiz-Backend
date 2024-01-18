@@ -1,5 +1,5 @@
 import QuizForm from "./QuizForm";
-import "./../../app.css"
+import "./../../style.css"
 import Header from "../../Component/Header";
 import Footer from "../../Component/Footer";
 function index() {
